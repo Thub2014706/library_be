@@ -7,12 +7,11 @@ class BorrowService {
 
     extractBorrowData(payload) {
         const borrow = {
-            name: payload.name,
-            type: payload.type,
-            year: payload.year,
-            number: payload.number,
-            author: payload.author,
-            publisher: payload.publisher
+            reader: payload.reader,
+            book: payload.book,
+            borrowDate: payload.borrowDate,
+            durationDate: payload.durationDate,
+            return: payload.return
         };
 
         Object.keys(borrow).forEach(
@@ -23,43 +22,78 @@ class BorrowService {
 
     async create(payload) {
         const borrow = this.extractBorrowData(payload);
-        const result = await this.Book.insertOne(
+        const result = await this.Borrow.findOneAndUpdate(
             borrow,
+            { $set: { return: 0 } },
+            { returnDocument: "after", upsert: true }
         )
         return result;
     }
 
-    async delete(id) {
-        const result = await this.Book.findOneAndDelete({
-            _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
-        });
-        return result;
-    }
-
-    async update(id, payload) {
-        const filter = {
-            _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
-        };
-        const update = this.extractBookData(payload);
-        const result = await this.Book.findOneAndUpdate(
-            filter,
-            { $set: update },
-            { returnDocument: "after" }
-        );
-        return result;
-    }
-
-    async find(filter) {
-        const result = await this.Book.find(filter);
-        return result.toArray();
+    async find(name, number) {
+        let query = {
+            $or: [
+                {reader: { $regex: new RegExp(name), $options: "i" }},
+                {book: { $regex: new RegExp(name), $options: "i" }},
+            ]
+        }
+        const result = await this.Borrow.find(query).toArray();
+        if (number) {
+            const start = (number - 1) * 6; 
+            const end = start + 6; 
+            const newArray = result.slice(start, end); 
+    
+            const totalPages = Math.ceil(result.length / 6);
+        
+            return {
+                data: newArray,
+                totalPages: totalPages
+            };
+        } else {
+            return result
+        }
     }
 
     async getDetail(id) {
-        const result = await this.Book.findOne({
+        const result = await this.Borrow.findOne({
             _id: ObjectId.isValid(id) ? new ObjectId(id) : null
         });
         return result;
     }
+
+    async numberBorrowByUser(id) {
+        const number = await this.Borrow.countDocuments({
+            reader: id
+        })
+        return number;
+    }
+
+    async returnTheBook(id) {
+        const filter = {
+            _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
+        };
+        const data = await this.Borrow.findOneAndUpdate(
+            filter,
+            { $set: { return: new Date() } },
+            { returnDocument: "after", new: true }
+        )
+        return data;
+    }
+
+    async findReader(payload) {
+        const result = await this.Borrow.find({
+            reader: { $regex: new RegExp(payload), $options: "i" }
+        }).toArray();
+        return result;
+    }
+
+    async findBook(payload) {
+        const result = await this.Borrow.find({
+            book: { $regex: new RegExp(payload), $options: "i" }
+        }).toArray();
+        return result;
+    }
+
 }
 
-module.exports = BookService;
+module.exports = BorrowService;

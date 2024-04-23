@@ -4,6 +4,6 @@ const employees = require("../controllers/employee.controller");
 const router = express.Router();
 
 router.route("/")
-    .post(employees.create)
+    .post(employees.login)
 
 module.exports = router;

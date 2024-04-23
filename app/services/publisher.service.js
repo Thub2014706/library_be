@@ -46,9 +46,22 @@ class PublisherService {
         return result;
     }
 
-    async find(filter) {
-        const result = await this.Publisher.find(filter);
-        return result.toArray();
+    async find(name, number) {
+        const result = await this.Publisher.find({
+            name: { $regex: new RegExp(name), $options: "i" },
+        }).toArray();
+        if (number) {
+            const start = (number - 1) * 10; 
+            const end = start + 10; 
+            const newArray = result.slice(start, end); 
+            const totalPages = Math.ceil(result.length / 10)
+            return {
+                data: newArray,
+                totalPages: totalPages
+            };
+        } else {
+            return result
+        }
     }
 
     async getDetail(id) {

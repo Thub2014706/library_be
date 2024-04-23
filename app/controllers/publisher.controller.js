@@ -56,7 +56,7 @@ const findAll = async (req, res, next) => {
     let documents = [];
     try {
         const publisherService = new PublisherService(MongoDB.client);
-        documents = await publisherService.find({});
+        documents = await publisherService.find(req.query.name, req.query.number);
         return res.send(documents);
     } catch (error) {
         console.log(error)
