@@ -45,11 +45,39 @@ const create = async (req, res, next) => {
     }
 };
 
-const findAll = async (req, res, next) => {
+const findBorrowing = async (req, res, next) => {
     let documents = [];
     try {
         const borrowService = new BorrowService(MongoDB.client);
-        documents = await borrowService.find(req.query.name, req.query.number);
+        documents = await borrowService.findBorrowing(req.query.name, req.query.number);
+        return res.send(documents);
+    } catch (error) {
+        console.log(error)
+        return next(
+            new ApiError(500, "An error has occurred")
+        );
+    }
+}
+
+const findReturned = async (req, res, next) => {
+    let documents = [];
+    try {
+        const borrowService = new BorrowService(MongoDB.client);
+        documents = await borrowService.findReturned(req.query.name, req.query.number);
+        return res.send(documents);
+    } catch (error) {
+        console.log(error)
+        return next(
+            new ApiError(500, "An error has occurred")
+        );
+    }
+}
+
+const findLate = async (req, res, next) => {
+    let documents = [];
+    try {
+        const borrowService = new BorrowService(MongoDB.client);
+        documents = await borrowService.findLate(req.query.name, req.query.number);
         return res.send(documents);
     } catch (error) {
         console.log(error)
@@ -106,10 +134,12 @@ const findBook = async (req, res, next) => {
 
 module.exports = {
     create,
-    findAll,
+    findBorrowing,
     returnTheBook,
     findReader,
-    findBook
+    findBook,
+    findReturned,
+    findLate
 }
 
 

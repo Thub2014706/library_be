@@ -7,8 +7,8 @@ class BorrowService {
 
     extractBorrowData(payload) {
         const borrow = {
-            reader: payload.reader,
-            book: payload.book,
+            reader: new ObjectId(payload.reader),
+            book: new ObjectId(payload.book),
             borrowDate: payload.borrowDate,
             durationDate: payload.durationDate,
             return: payload.return
@@ -30,28 +30,144 @@ class BorrowService {
         return result;
     }
 
-    async find(name, number) {
-        let query = {
-            $or: [
-                {reader: { $regex: new RegExp(name), $options: "i" }},
-                {book: { $regex: new RegExp(name), $options: "i" }},
-            ]
-        }
-        const result = await this.Borrow.find(query).toArray();
-        if (number) {
-            const start = (number - 1) * 6; 
-            const end = start + 6; 
-            const newArray = result.slice(start, end); 
-    
-            const totalPages = Math.ceil(result.length / 6);
+    async findBorrowing(name, number) {
+        const all = await this.Borrow.find({return: 0, durationDate: { $gte: new Date() }}).toArray()
+        const relation = await this.Borrow.aggregate([
+            {
+                $match: {
+                    _id: { $in: all.map(value => value._id) }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "reader",
+                    foreignField: "_id",
+                    as: "reader_details",
+                }
+            },
+            {
+                $lookup: {
+                    from: "books",
+                    localField: "book",
+                    foreignField: "_id",
+                    as: "book_details",
+                }
+            }
+        ]).toArray();
+
+        const result = relation.filter(doc => 
+            doc.reader_details[0].name.match(new RegExp(name, 'i')) || 
+            doc.book_details[0].name.match(new RegExp(name, 'i'))
+        );
+        // console.log(reader)
+        const start = (number - 1) * 6; 
+        const end = start + 6; 
+        const newArray = result.slice(start, end); 
+
+        const totalPages = Math.ceil(result.length / 6);
+
         
-            return {
-                data: newArray,
-                totalPages: totalPages
-            };
-        } else {
-            return result
-        }
+    
+        return {
+            data: newArray,
+            totalPages: totalPages
+        };
+    }
+
+    async findReturned(name, number) {
+        const all = await this.Borrow.find({ 
+            $expr: {
+                $lte: ["$return", "$durationDate"]
+            }
+         }).toArray()
+        // console.log()
+        const relation = await this.Borrow.aggregate([
+            {
+                $match: {
+                    _id: { $in: all.map(value => value._id) }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "reader",
+                    foreignField: "_id",
+                    as: "reader_details",
+                }
+            },
+            {
+                $lookup: {
+                    from: "books",
+                    localField: "book",
+                    foreignField: "_id",
+                    as: "book_details",
+                }
+            }
+        ]).toArray();
+
+        const result = relation.filter(doc => 
+            doc.reader_details[0].name.match(new RegExp(name, 'i')) || 
+            doc.book_details[0].name.match(new RegExp(name, 'i'))
+        );
+        // console.log(reader)
+        const start = (number - 1) * 6; 
+        const end = start + 6; 
+        const newArray = result.slice(start, end); 
+
+        const totalPages = Math.ceil(result.length / 6);
+
+        
+    
+        return {
+            data: newArray,
+            totalPages: totalPages
+        };
+    }
+
+    async findLate(name, number) {
+        const all = await this.Borrow.find({return: 0, durationDate: { $lt: new Date() }}).toArray()
+        const relation = await this.Borrow.aggregate([
+            {
+                $match: {
+                    _id: { $in: all.map(value => value._id) }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "reader",
+                    foreignField: "_id",
+                    as: "reader_details",
+                }
+            },
+            {
+                $lookup: {
+                    from: "books",
+                    localField: "book",
+                    foreignField: "_id",
+                    as: "book_details",
+                }
+            }
+        ]).toArray();
+
+        const result = relation.filter(doc => 
+            doc.reader_details[0].name.match(new RegExp(name, 'i')) || 
+            doc.book_details[0].name.match(new RegExp(name, 'i'))
+        );
+        // console.log(reader)
+        const start = (number - 1) * 6; 
+        const end = start + 6; 
+        const newArray = result.slice(start, end); 
+
+        const totalPages = Math.ceil(result.length / 6);
+
+        
+    
+        return {
+            data: newArray,
+            totalPages: totalPages
+        };
     }
 
     async getDetail(id) {

@@ -5,7 +5,15 @@ const router = express.Router();
 
 router.route("/")
     .post(borrow.create)
-    .get(borrow.findAll)
+
+router.route("/find-borrowing")
+    .get(borrow.findBorrowing)
+
+router.route("/find-returned")
+    .get(borrow.findReturned)
+
+router.route("/find-late")
+    .get(borrow.findLate)
 
 router.route("/:id")
     .put(borrow.returnTheBook)

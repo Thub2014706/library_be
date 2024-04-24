@@ -38,17 +38,6 @@ class UserService {
         )
         return result;
     }
-    // async find(filter, number) {
-    //     const result = await this.User.find(filter).toArray();
-    //     const start = (number - 1) * 10; 
-    //     const end = start + 10; 
-    //     const newArray = result.slice(start, end); 
-    //     const totalPages = Math.ceil(result.length / 10)
-    //     return {
-    //         data: newArray,
-    //         totalPages: totalPages
-    //     };
-    // }
 
     async find(name, number) {
         const result = await this.User.find({

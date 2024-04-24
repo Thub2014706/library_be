@@ -12,7 +12,7 @@ class BookService {
             number: Number(payload.number),
             borrowed: payload.borrowed,
             author: payload.author,
-            publisher: payload.publisher
+            publisher: new ObjectId(payload.publisher)
         };
 
         Object.keys(book).forEach(
@@ -59,13 +59,32 @@ class BookService {
                 {publisher: { $regex: new RegExp(name), $options: "i" }},
             ]
         }
+        
         const result = await this.Book.find(query).toArray();
+        
         const start = (number - 1) * 10; 
         const end = start + 10; 
         const newArray = result.slice(start, end); 
         const totalPages = Math.ceil(result.length / 10)
+
+        const relation = await this.Book.aggregate([
+            {
+                $match: {
+                    _id: { $in: newArray.map(value => value._id) }
+                }
+            },
+            {
+                $lookup: {
+                    from: "publisher",
+                    localField: "publisher",
+                    foreignField: "_id",
+                    as: "publisher_details",
+                },
+            },
+        ]).toArray();
+
         return {
-            data: newArray,
+            data: relation,
             totalPages: totalPages
         };
     }
