@@ -7,6 +7,7 @@ class BookService {
 
     extractBookData(payload) {
         const book = {
+            image: payload.image,
             name: payload.name,
             year: payload.year,
             number: Number(payload.number),
@@ -51,7 +52,7 @@ class BookService {
         return result;
     }
 
-    async find(name, number) {
+    async find(name, number, show) {
         let query = { 
             $or: [
                 {name: { $regex: new RegExp(name), $options: "i" }},
@@ -62,10 +63,10 @@ class BookService {
         
         const result = await this.Book.find(query).toArray();
         
-        const start = (number - 1) * 10; 
-        const end = start + 10; 
+        const start = (number - 1) * show; 
+        const end = start + show; 
         const newArray = result.slice(start, end); 
-        const totalPages = Math.ceil(result.length / 10)
+        const totalPages = Math.ceil(result.length / show)
 
         const relation = await this.Book.aggregate([
             {

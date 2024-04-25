@@ -1,19 +1,40 @@
 const ApiError = require("../api-error");
 const UserService = require("../services/users.service");
 const MongoDB = require("../utils/mongodb.util");
+const bcrypt = require('bcrypt')
 
-const create = async (req, res, next) => {
-    if (!req.body?.name) {
-        return next(new ApiError(400, "Name can not be empty"));
+const login = async (req, res, next) => {
+    const {dienthoai, matkhau} = req.body;
+    if (!dienthoai || !matkhau) {
+        return res.status(400).send('Không được trống');
     }
-    
     try {
         const userService = new UserService(MongoDB.client);
-        const document = await userService.create(req.body);
+        const document = await userService.login(dienthoai, matkhau);
         return res.send(document);
     } catch (error) {
+        console.log(error);
         return next(
-            new ApiError(500, "An error has occurred")
+            new ApiError(500, "Lỗi kết nối", error)
+        );
+    }
+};
+
+const register = async (req, res, next) => {
+    const {ten, ngaysinh, gioitinh, diachi, dienthoai, matkhau} = req.body;
+    if (!ten || !ngaysinh || !gioitinh || !diachi || !dienthoai || !matkhau) {
+        return res.status(400).send('Không được trống');
+    }
+    try {
+        const salt = await bcrypt.genSalt(5);
+        const hashedPassword = await bcrypt.hash(matkhau, salt);
+        const userService = new UserService(MongoDB.client);
+        const document = await userService.register({ten, ngaysinh, gioitinh, diachi, dienthoai, matkhau: hashedPassword});
+        return res.send(document);
+    } catch (error) {
+        console.log(error);
+        return next(
+            new ApiError(500, "Lỗi kết nối", error)
         );
     }
 };
@@ -79,7 +100,8 @@ const deleteUser = async (req, res, next) => {
 };
 
 module.exports = {
-    create,
+    login,
+    register,
     findAll,
     getDetail,
     update,

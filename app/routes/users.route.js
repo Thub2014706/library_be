@@ -4,8 +4,13 @@ const users = require("../controllers/users.controller");
 const router = express.Router();
 
 router.route("/")
-    .post(users.create)
     .get(users.findAll)
+
+router.route("/login")
+    .post(users.login)
+
+router.route("/register")
+    .post(users.register)
 
 router.route("/:id")
     .get(users.getDetail)

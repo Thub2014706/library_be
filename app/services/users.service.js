@@ -1,5 +1,8 @@
 const { ObjectId } = require("mongodb");
-const moment = require('moment')
+// const moment = require('moment')
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt')
+
 
 class UserService {
     constructor(client) {
@@ -8,20 +11,13 @@ class UserService {
 
     extractUserData(payload) {
         const user = {
-            name: payload.name,
-            birth: payload.birth,
-            gender: payload.gender,
-            email: payload.email,
-            address: payload.address,
-            phone: payload.phone,
-            current: new Date()
+            ten: payload.ten,
+            ngaysinh: payload.ngaysinh,
+            gioitinh: payload.gioitinh,
+            diachi: payload.diachi,
+            dienthoai: payload.dienthoai,
+            matkhau: payload.matkhau
         };
-
-        const date = new Date();
-
-        date.setMonth(date.getMonth() + 12);
-
-        user.duration = date;
 
         Object.keys(user).forEach(
             (key) => user[key] === undefined && delete user[key]
@@ -29,19 +25,40 @@ class UserService {
         return user;
     }
 
-    async create(payload) {
-        const user = this.extractUserData(payload);
+    async login(dienthoai, matkhau) {
+        // const hashedPassword = bcrypt.hashSync(matkhau, 10);
+ 
+        const user = await this.User.findOne({ dienthoai: dienthoai });
+        if (!user) {
+            return new ApiError(500, 'Người dùng không tồn tại!');
+        }
+
+        const passwordMatch = await bcrypt.compare(matkhau, user.matkhau);
+        if (!passwordMatch) {
+            return new ApiError(500, 'Mật khẩu không đúng!');
+        }
+
+        const data = {
+            _id: user._id,
+            ten: user.ten,
+        }
+
+        const token = jwt.sign(data, 'ACCESS_TOKEN_SECRET', { expiresIn: '1d' });
+
+        return token;
+    }
+
+    async register(data) {
+        const user = this.extractUserData(data);
         const result = await this.User.insertOne(
             user,
-            // { $set: { role: 0 } },
-            // { returnDocument: "after", upsert: true }
         )
         return result;
     }
 
     async find(name, number) {
         const result = await this.User.find({
-            name: { $regex: new RegExp(name), $options: "i" },
+            ten: { $regex: new RegExp(name), $options: "i" },
         }).toArray();
         const start = (number - 1) * 10; 
         const end = start + 10; 
