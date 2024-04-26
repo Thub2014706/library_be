@@ -38,14 +38,14 @@ class UserService {
             return new ApiError(500, 'Mật khẩu không đúng!');
         }
 
-        const data = {
-            _id: user._id,
-            ten: user.ten,
-        }
+        // const data = {
+        //     _id: user._id,
+        //     ten: user.ten,
+        // }
 
-        const token = jwt.sign(data, 'ACCESS_TOKEN_SECRET', { expiresIn: '1d' });
+        // const token = jwt.sign(data, 'ACCESS_TOKEN_SECRET', { expiresIn: '1d' });
 
-        return token;
+        return user;
     }
 
     async register(data) {
